@@ -1,0 +1,47 @@
+{
+  "name": "woocommerce/woocommerce-gateway-eway",
+  "description": "WooCommerce Eway Payment Gateway",
+  "type": "wordpress-plugin",
+  "require-dev": {
+    "woocommerce/woocommerce-sniffs": "^0.1.1"
+  },
+  "license": "GPL-3.0-or-later",
+  "require": {
+    "eway/eway-rapid-php": "^2.0"
+  },
+  "scripts": {
+    "strauss": [
+      "test -f ./bin/strauss.phar || curl -o bin/strauss.phar -L -C - https://github.com/BrianHenryIE/strauss/releases/download/0.14.0/strauss.phar",
+      "@php bin/strauss.phar"
+    ],
+    "post-install-cmd": [
+      "@strauss",
+      "composer dump-autoload -o"
+    ],
+    "post-update-cmd": [
+      "@strauss",
+      "composer dump-autoload -o"
+    ]
+  },
+  "extra": {
+    "strauss": {
+      "packages": [
+        "eway/eway-rapid-php"
+      ],
+      "target_directory": "vendor/vendor-prefixed",
+      "namespace_prefix": "Automattic\\WooCommerce\\Eway\\Vendors",
+      "classmap_prefix": "Automattic_WooCommerce_Eway_Vendor_",
+      "constant_prefix": "Automattic_WooCommerce_Eway_Vendor_",
+      "delete_vendor_packages": true,
+      "delete_vendor_files": true
+    }
+  },
+  "config": {
+    "platform": {
+      "php": "7.4"
+    },
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  }
+}

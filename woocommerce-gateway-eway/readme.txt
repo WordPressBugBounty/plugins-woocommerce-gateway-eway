@@ -1,10 +1,10 @@
-=== WooCommerce Eway Gateway ===
+=== Eway Payments for Woo ===
 Contributors: eway, woocommerce, automattic, woothemes, royho, akeda, mattyza, bor0, dwainm, laurendavissmith001, mikejolley, kloon, jeffstieler
 Tags: credit card, eway, payment request, gateway, woocommerce, automattic
 Requires at least: 6.0
-Tested up to: 6.2
-Stable tag: 3.7.2
-Requires PHP: 7.3
+Tested up to: 6.7
+Stable tag: 3.8.0
+Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -82,6 +82,13 @@ For help setting up and configuring, please refer to our [user guide](https://do
 If you get stuck, you can ask for help in the Plugin Forum.
 
 == Changelog ==
+
+= 3.7.2 - 2025-01-30 =
+Dev - assets (icons and banners)
+Dev - use new rapid-php version 2.0
+Dev - Bump WordPress minimum supported version to 6.7.
+Dev - Bump WooCommerce "tested up to" version to 9.6.
+Dev - Update plugin name to "Eway Payments for Woo"
 
 = 3.7.2 - 2024-01-18 =
 * Add - New configuration option: Connection Method

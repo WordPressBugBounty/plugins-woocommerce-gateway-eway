@@ -8,7 +8,7 @@ Generally, only the latest version of the extension has continued support.  In s
 
 ## Reporting a Vulnerability
 
-[WooCommerce Eway Gateway](https://wordpress.org/plugins/woocommerce-gateway-eway/) is an open-source plugin for WooCommerce. Our HackerOne program covers the plugin software.
+[Eway Payments for Woo](https://wordpress.org/plugins/woocommerce-gateway-eway/) is an open-source plugin for WooCommerce. Our HackerOne program covers the plugin software.
 
 **For responsible disclosure of security issues and to be eligible for our bug bounty program, please submit your report via the [HackerOne](https://hackerone.com/automattic) portal.**
 

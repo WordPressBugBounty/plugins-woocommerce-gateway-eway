@@ -3,7 +3,7 @@ Contributors: eway, woocommerce, automattic, woothemes, royho, akeda, mattyza, b
 Tags: credit card, eway, payment request, gateway, woocommerce, automattic
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 3.8.0
+Stable tag: 3.9.2
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -82,6 +82,25 @@ For help setting up and configuring, please refer to our [user guide](https://do
 If you get stuck, you can ask for help in the Plugin Forum.
 
 == Changelog ==
+
+= 3.9.2 - 2025-10-10 =
+* Fix - Fix issue for RSP error when using saved cards
+* Dev - Bump version to 3.9.2
+
+= 3.9.1 - 2025-10-10 =
+* Fix - Revert back redirect to RSP
+* Dev - Bump version to 3.9.1
+
+= 3.9.0 - 2025-10-09 =
+* Dev - Bump version to 3.9.0
+* Dev - 3D Secure set to disabled by default on fresh install
+* Fix - Saved cards being duplicated
+* Fix - Validation error message display in card fields
+* Deprecation - Remove fallback option transparent redirect
+
+= 3.8.0 - 2025-01-30 =
+Dev - bump to version 3.8.0
+Dev - recreate tag 3.8.0
 
 = 3.7.2 - 2025-01-30 =
 Dev - assets (icons and banners)

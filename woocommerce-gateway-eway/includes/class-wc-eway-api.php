@@ -301,10 +301,16 @@ if ( ! class_exists( 'WC_EWAY_API' ) ) {
 		 * @param WC_Order   $order             The order associated with the payment.
 		 * @param int|string $token_customer_id The customer's token customer id to include in direct payment request.
 		 * @param int        $amount            The amount to charge for the order.
+		 * @param string|null $transaction_type  The transaction type
 		 *
 		 * @throws Exception If an error occurs during API request.
 		 */
-		public function direct_payment( $order, $token_customer_id, $amount = 0 ) {
+		public function direct_payment(
+			$order,
+			$token_customer_id,
+			$amount = 0,
+			$transaction_type = EwaySdk\Enum\TransactionType::PURCHASE
+		) {
 			$order_id    = $order->get_id();
 			$order_key   = $order->get_order_key();
 			$amount      = intval( $amount );
@@ -327,7 +333,7 @@ if ( ! class_exists( 'WC_EWAY_API' ) ) {
 			$request = array(
 				'DeviceID'        => $this->device_id,
 				'PartnerID'       => $this->partner_id,
-				'TransactionType' => 'Recurring',
+				'TransactionType' => EwaySdk\Enum\TransactionType::RECURRING, //@TODO: use $transaction_type
 				'Method'          => 'TokenPayment',
 				'CustomerIP'      => $customer_ip,
 				'Customer'        => array(
@@ -480,7 +486,8 @@ if ( ! class_exists( 'WC_EWAY_API' ) ) {
 		public function direct_payment_with_secured_card_data_token(
 			\WC_Order $order,
 			array $threeds_verification_results,
-			$secured_card_data_token
+			$secured_card_data_token,
+			$transaction_type = EwaySdk\Enum\TransactionType::RECURRING
 		): object {
 			$order_id            = $order->get_id();
 			$order_key           = $order->get_order_key();
@@ -508,7 +515,7 @@ if ( ! class_exists( 'WC_EWAY_API' ) ) {
 			$transaction                    = new EwaySdk\Model\Transaction( array() );
 			$transaction->DeviceID          = $this->device_id;
 			$transaction->PartnerID         = $this->partner_id;
-			$transaction->TransactionType   = EwaySdk\Enum\TransactionType::RECURRING;
+			$transaction->TransactionType   = EwaySdk\Enum\TransactionType::RECURRING; //@TODO: use $transaction_type;
 			$transaction->Method            = EwaySdk\Enum\PaymentMethod::PROCESS_PAYMENT;
 			$transaction->CustomerIP        = $customer_ip;
 			$transaction->PaymentInstrument = array( 'PaymentType' => 'CreditCard' );

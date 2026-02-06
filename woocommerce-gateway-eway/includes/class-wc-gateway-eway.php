@@ -5,6 +5,8 @@
  * @package WooCommerce Eway Payment Gateway
  */
 
+use Automattic\WooCommerce\Eway\Vendors\Eway\Rapid\Enum\TransactionType;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -20,6 +22,7 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 	 * @property-read string $customer_password Eway customer password.
 	 * @property-read string $testmode          Eway sanodbox mode.
 	 */
+	#[AllowDynamicProperties]
 	class WC_Gateway_EWAY extends WC_Payment_Gateway {
 		const SECURE_FIELD_CONNECTION = 'card_credit';
 		const RESPONSIVE_SHARED_PAGE = 'shared_page';
@@ -124,6 +127,8 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 					'woocommerce_update_options_payment_gateways_' . $this->id,
 					array( $this, 'process_admin_options' )
 				);
+
+        add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
 			}
 
 			// Enqueue some JS functions and CSS.
@@ -142,6 +147,37 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 					array( $this, 'get_customer_payment_tokens' ),
 					10,
 					3
+				);
+			}
+		}
+
+		public function process_admin_options() {
+			$post_data = $this->get_post_data();
+			$public_api_key = $this->get_field_value( 'public_api_key', array( 'type' => 'text' ), $post_data );
+			$connection_method = $this->get_field_value( 'connection_method', array( 'type' => 'select' ), $post_data );
+
+			if ( $connection_method === self::SECURE_FIELD_CONNECTION && empty( $public_api_key ) ) {
+				WC_Admin_Settings::add_error( __(
+					'"Eway Public API Key" is required for "Secure Fields" connection method.',
+					'wc-eway'
+				) );
+				return false;
+			}
+
+			return parent::process_admin_options();
+		}
+
+		public function admin_enqueue_scripts() {
+			if ( ($_GET['page'] ?? '') === 'wc-settings'
+				&& ($_GET['tab'] ?? '') === 'checkout'
+				&& ($_GET['section'] ?? '') === 'eway'
+			) {
+				wp_enqueue_script(
+					'eway-admin-script',
+					$this->plugin_url() . 'dist/js/admin/eway.js',
+					array( 'jquery' ),
+					WOOCOMMERCE_GATEWAY_EWAY_VERSION,
+					true
 				);
 			}
 		}
@@ -168,6 +204,11 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 		 */
 		public function init_form_fields() {
 			$this->form_fields = array(
+				'section' => array(
+					'title'       => __('Card Settings', 'wc-eway'),
+					'type'        => 'title',
+					'description' => '<hr/>',
+				),
 				'enabled'           => array(
 					'title'       => __( 'Enable/Disable', 'wc-eway' ),
 					'label'       => __( 'Enable Eway', 'wc-eway' ),
@@ -179,7 +220,7 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 					'title'       => __( 'Title', 'wc-eway' ),
 					'type'        => 'text',
 					'description' => __( 'This controls the title which the user sees during checkout.', 'wc-eway' ),
-					'default'     => __( 'Credit Card', 'wc-eway' ),
+					'default'     => __( 'Pay with Eway', 'wc-eway' ),
 				),
 				'description'       => array(
 					'title'       => __( 'Description', 'wc-eway' ),
@@ -238,26 +279,23 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 				),
 			);
 
-			if ( $this->is_eway_secure_fields_enabled() ) {
-				$this->form_fields['3d_secure'] = array(
-					'title'       => __( '3-D Secure', 'wc-eway' ),
-					'label'       => __( 'Enable 3-D Secure', 'wc-eway' ),
-					'type'        => 'checkbox',
-					'description' => sprintf(
-					/* translators: 1. Eway 3-D Secure documentation link*/
-						__(
-							'If enabled, plugin will use <a href="%1$s" target="_blank">Eway\'s 3D Secure MPI</a> for credit card validation. Please match this extension\'s setting with the 3D Secure setting on the Eway Dashboard.',
-							'wc-eway'
-						),
-						'https://eway.io/api-v3/?php#3d-secure-2-0'
-					),
-					'default'     => 'yes',
-				);
-			}
-
 			$this->form_fields = array_merge(
 				$this->form_fields,
 				array(
+					'3d_secure' => array(
+						'title'       => __( '3-D Secure', 'wc-eway' ),
+						'label'       => __( 'Enable 3-D Secure', 'wc-eway' ),
+						'type'        => 'checkbox',
+						'description' => sprintf(
+						/* translators: 1. Eway 3-D Secure documentation link*/
+							__(
+								'If enabled, plugin will use <a href="%1$s" target="_blank">Eway\'s 3D Secure MPI</a> for credit card validation. Please match this extension\'s setting with the 3D Secure setting on the Eway Dashboard.',
+								'wc-eway'
+							),
+							'https://eway.io/api-v3/?php#3d-secure-2-0'
+						),
+						'default'     => 'no',
+					),
 					'connection_method'      => array(
 						'title'       => __( 'Connection Method', 'wc-eway' ),
 						'label'       => __( 'Connection Method', 'wc-eway' ),
@@ -299,6 +337,45 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 					),
 				)
 			);
+		}
+
+		public function generate_select_html($key, $data) {
+			if (isset($data['render_as']) && $data['render_as'] === 'radio') {
+				$field_key    = $this->get_field_key($key);
+				$option_value = $this->get_option($key, $data['default']);
+
+				ob_start();
+				?>
+				<tr valign="top">
+					<th scope="row" class="titledesc">
+						<label for="<?php echo esc_attr( $field_key ); ?>">
+							<?php echo wp_kses_post( $data['title'] ); ?> <?php echo $this->get_tooltip_html( $data ); ?>
+						</label>
+					</th>
+					<td class="forminp">
+						<?php foreach ( (array) $data['options'] as $opt_key => $opt_value ) : ?>
+							<label style="display:block">
+								<input type="radio"
+										value="<?php echo esc_attr($opt_key)  ?>"
+										class="<?php echo esc_attr( $data['class'] ); ?>"
+										name="<?php echo esc_attr( $field_key ); ?>"
+										id="<?php echo esc_attr( $field_key ); ?>"
+										style="<?php echo esc_attr( $data['css'] ); ?>"
+										<?php echo disabled( $data['disabled'] ); ?>
+										<?php echo checked($opt_key, $option_value, false) ?>
+										<?php echo $this->get_custom_attribute_html( $data ); ?>/>
+								<?php echo $opt_value; ?>
+							</label><br/>
+						<?php endforeach; ?>
+						<?php echo $this->get_description_html( $data ); ?>
+					</td>
+				</tr>
+				<?php
+
+				return ob_get_clean();
+			}
+
+			return parent::generate_select_html($key, $data);
 		}
 
 		/**
@@ -346,11 +423,17 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 		 * @param WC_Order   $order                  The order to process.
 		 * @param int        $amount_to_charge       The amount to charge for the order.
 		 * @param int|string $eway_token_customer_id The customer's TokenCustomerID to include in direct payment request.
+		 * @param null|string $transaction_type      The transaction type
 		 *
 		 * @return stdClass JSON parsed API response on success, or null on failure
 		 * @throws Exception If order does not exist or if payment gateway fails.
 		 */
-		protected function process_payment_request( $order, $amount_to_charge, $eway_token_customer_id ) {
+		protected function process_payment_request(
+			$order,
+			$amount_to_charge,
+			$eway_token_customer_id,
+			$transaction_type = TransactionType::PURCHASE
+		) {
 			$order_id = $order->get_id();
 
 			self::log( $order_id . ': Processing payment request' );
@@ -359,7 +442,8 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 				$this->get_api()->direct_payment(
 					$order,
 					$eway_token_customer_id,
-					$amount_to_charge * 100.00
+					$amount_to_charge * 100.00,
+					$transaction_type
 				)
 			);
 
@@ -386,7 +470,8 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 		protected function process_payment_with_secure_fields(
 			\WC_Order $order,
 			array $threeds_verification_results,
-			$secured_card_data_token
+			$secured_card_data_token,
+			$transaction_type
 		): stdClass {
 			$order_id = $order->get_id();
 			self::log( $order_id . ': Processing payment request' );
@@ -394,7 +479,8 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 			$result = $this->get_api()->direct_payment_with_secured_card_data_token(
 				$order,
 				$threeds_verification_results,
-				$secured_card_data_token
+				$secured_card_data_token,
+				$transaction_type
 			);
 
 			// Check if the order exists.
@@ -512,7 +598,7 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 				$eway_customer_token = (string) $eway_customer->TokenCustomerID;
 
 				// Check if the customer already has token. If not, add it.
-				$eway_cards         = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), $this->id );
+				$eway_cards         = WC_Payment_Tokens::get_customer_tokens( $order->get_user_id(), $this->id );
 				$has_customer_token = $eway_cards && array_filter(
 					$eway_cards,
 					static function ( $eway_card ) use ( $eway_customer_token ) {
@@ -641,7 +727,8 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 				$this->process_payment_with_secure_fields(
 					$order,
 					$threeds_verification_results,
-					$secured_card_data_token
+					$secured_card_data_token,
+					TransactionType::PURCHASE
 				);
 
 				WC()->cart->empty_cart();
@@ -920,14 +1007,14 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 			$plugin_url = $this->plugin_url();
 
 			return array(
-				'visa'       => '<img src="' . $plugin_url . 'dist/images/visa.svg" class="eway-icon" alt="Visa" />',
-				'mastercard' => '<img src="' . $plugin_url . 'dist/images/mastercard.svg" class="eway-icon" alt="MasterCard" />',
-				'discover'   => '<img src="' . $plugin_url . 'dist/images/discover.svg" class="eway-icon" alt="Discover" />',
-				'amex'       => '<img src="' . $plugin_url . 'dist/images/amex.svg" class="eway-icon" alt="Amex" />',
-				'dinersclub' => '<img src="' . $plugin_url . 'dist/images/diners.svg" class="eway-icon" alt="Diners" />',
-				'maestro'    => '<img src="' . $plugin_url . 'dist/images/maestro.svg" class="eway-icon" alt="Maestro" />',
-				'unionpay'   => '<img src="' . $plugin_url . 'dist/images/unionpay.svg" class="eway-icon" alt="UnionPay" />',
-				'jcb'        => '<img src="' . $plugin_url . 'dist/images/jcb.svg" class="eway-icon" alt="JCB" />',
+				'visa'       => '<img height="40" src="' . $plugin_url . 'dist/images/visa.svg" class="eway-icon" alt="Visa" />',
+				'mastercard' => '<img height="40" src="' . $plugin_url . 'dist/images/mastercard.svg" class="eway-icon" alt="MasterCard" />',
+				'discover'   => '<img height="40" src="' . $plugin_url . 'dist/images/discover.svg" class="eway-icon" alt="Discover" />',
+				'amex'       => '<img height="40" src="' . $plugin_url . 'dist/images/amex.svg" class="eway-icon" alt="Amex" />',
+				'dinersclub' => '<img height="40" src="' . $plugin_url . 'dist/images/diners.svg" class="eway-icon" alt="Diners" />',
+				'maestro'    => '<img height="40" src="' . $plugin_url . 'dist/images/maestro.svg" class="eway-icon" alt="Maestro" />',
+				'unionpay'   => '<img height="40" src="' . $plugin_url . 'dist/images/unionpay.svg" class="eway-icon" alt="UnionPay" />',
+				'jcb'        => '<img height="40" src="' . $plugin_url . 'dist/images/jcb.svg" class="eway-icon" alt="JCB" />'
 			);
 		}
 
@@ -1136,11 +1223,15 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 			}
 
 			$eway_cards = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), $this->id );
+			$is_saved_cards_enabled = is_user_logged_in() && is_checkout() && $this->saved_cards;
+			$is_eway_secure_fields_enabled = $this->is_eway_secure_fields_enabled();
 
-			if ( is_user_logged_in() && is_checkout() && $this->saved_cards ) {
+			if ( $is_saved_cards_enabled ) {
 				wc_get_template(
 					'eway-saved-card-list.php',
-					array( 'eway_cards' => $eway_cards ),
+					array(
+						'eway_cards' => $eway_cards,
+					),
 					'eway/',
 					plugin_dir_path( __FILE__ ) . '../templates/'
 				);
@@ -1148,7 +1239,7 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 				wp_nonce_field( 'eway_use_saved_card', '_eway_nonce' );
 			}
 
-			if ( $this->is_eway_secure_fields_enabled() ) {
+			if ( $is_eway_secure_fields_enabled ) {
 				wc_get_template(
 					'eway-secure-fields-cc-form.php',
 					array(

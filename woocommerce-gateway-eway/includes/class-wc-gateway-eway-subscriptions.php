@@ -5,6 +5,8 @@
  * @package WooCommerce Eway Payment Gateway
  */
 
+use Automattic\WooCommerce\Eway\Vendors\Eway\Rapid\Enum\TransactionType;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -237,7 +239,7 @@ if ( ! class_exists( 'WC_Gateway_EWAY_Subscriptions' ) ) {
 
 			// Charge the customer.
 			try {
-				return $this->process_payment_request( $order, $amount, $eway_token_customer_id );
+				return $this->process_payment_request( $order, $amount, $eway_token_customer_id, TransactionType::RECURRING );
 			} catch ( Exception $e ) {
 				return new WP_Error( 'eway_error', $e->getMessage() );
 			}
@@ -254,7 +256,7 @@ if ( ! class_exists( 'WC_Gateway_EWAY_Subscriptions' ) ) {
 		 *
 		 * @return bool
 		 */
-		private function check_customer_has_token( $eway_token_customer_id, $order ) {
+		protected function check_customer_has_token( $eway_token_customer_id, $order ) {
 			$customer_id = $order->get_customer_id();
 
 			$this->migrate_eway_customer_token_from_user_meta( $customer_id, $eway_token_customer_id );
@@ -548,6 +550,34 @@ if ( ! class_exists( 'WC_Gateway_EWAY_Subscriptions' ) ) {
 			}
 
 			return parent::can_save_eway_customer_token( $order );
+		}
+
+		/**
+		 * @param WC_Order $order
+		 * @param array $threeds_verification_results
+		 * @param $secured_card_data_token
+		 * @param $transaction_type
+		 *
+		 * @return stdClass
+		 * @throws Exception
+		 */
+		protected function process_payment_with_secure_fields(
+			WC_Order $order,
+			array $threeds_verification_results,
+			$secured_card_data_token,
+			$transaction_type
+		): stdClass {
+
+			if ( $this->order_contains_subscription( $order ) || $this->is_subscription( $order ) ) {
+				$transaction_type = TransactionType::RECURRING;
+			}
+
+			return parent::process_payment_with_secure_fields(
+				$order,
+				$threeds_verification_results,
+				$secured_card_data_token,
+				$transaction_type
+			);
 		}
 	}
 }

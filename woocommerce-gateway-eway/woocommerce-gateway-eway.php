@@ -5,7 +5,7 @@
  * Plugin URI: https://woocommerce.com/products/eway/
  * Author: Eway
  * Author URI: https://eway.com.au
- * Version: 3.8.0
+ * Version: 3.9.2
  * Text Domain: wc-eway
  * Domain Path: /languages
  * Requires at least: 6.0
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-define( 'WOOCOMMERCE_GATEWAY_EWAY_VERSION', '3.8.0' ); // WRCS: DEFINED_VERSION.
+define( 'WOOCOMMERCE_GATEWAY_EWAY_VERSION', '3.9.2' ); // WRCS: DEFINED_VERSION.
 define( 'WOOCOMMERCE_GATEWAY_EWAY_MIN_WC_VERSION', '6.0' );
 define( 'WOOCOMMERCE_GATEWAY_EWAY_MIN_WCS_VERSION', '2.0' );
 define( 'WOOCOMMERCE_GATEWAY_EWAY_URL', untrailingslashit( plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) ) );
@@ -40,7 +40,9 @@ function woocommerce_eway_init() {
 		return;
 	}
 
-	load_plugin_textdomain( 'wc-eway', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+	add_action( 'init', function () {
+		load_plugin_textdomain( 'wc-eway', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+	} );
 
 	define( 'WC_EWAY_TEMPLATE_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) . '/templates/' );
 

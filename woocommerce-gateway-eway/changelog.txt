@@ -1,5 +1,8 @@
 *** Eway Payments for Woo Changelog ***
 
+= 3.9.3 - 2026-08-13 =
+* Fix - Fix vulnerability report
+
 = 3.9.2 - 2025-10-10 =
 * Fix - Fix issue for RSP error when using saved cards
 * Dev - Bump version to 3.9.2

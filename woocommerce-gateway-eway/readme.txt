@@ -2,8 +2,8 @@
 Contributors: eway, woocommerce, automattic, woothemes, royho, akeda, mattyza, bor0, dwainm, laurendavissmith001, mikejolley, kloon, jeffstieler
 Tags: credit card, eway, payment request, gateway, woocommerce, automattic
 Requires at least: 6.0
-Tested up to: 6.7
-Stable tag: 3.9.2
+Tested up to: 7.0
+Stable tag: 3.9.3
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -82,6 +82,9 @@ For help setting up and configuring, please refer to our [user guide](https://do
 If you get stuck, you can ask for help in the Plugin Forum.
 
 == Changelog ==
+
+= 3.9.3 - 2026-08-13 =
+* Fix - Fix vulnerability report
 
 = 3.9.2 - 2025-10-10 =
 * Fix - Fix issue for RSP error when using saved cards

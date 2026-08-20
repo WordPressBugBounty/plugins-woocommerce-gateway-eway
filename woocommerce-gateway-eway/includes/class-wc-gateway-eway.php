@@ -680,6 +680,7 @@ if ( ! class_exists( 'WC_Gateway_EWAY' ) ) {
 						! $eway_customer_token
 						|| ! is_user_logged_in()
 						|| ! isset( $_POST['_eway_nonce'] )
+						|| (int)get_current_user_id() !== (int)$saved_token->get_user_id()
 						|| ! wp_verify_nonce( sanitize_key( $_POST['_eway_nonce'] ), 'eway_use_saved_card' )
 					) {
 						throw new Exception(

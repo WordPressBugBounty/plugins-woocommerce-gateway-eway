@@ -170,6 +170,7 @@ class WC_Gateway_EWAY_Ajax_Request_Controller {
 			if (
 				! is_user_logged_in()
 				|| ! isset( $_POST['_eway_nonce'] )
+				|| (int)get_current_user_id() !== (int)$saved_token->get_user_id()
 				|| ! wp_verify_nonce( sanitize_key( $_POST['_eway_nonce'] ), 'eway_use_saved_card' )
 			) {
 				throw new Exception(

@@ -5,12 +5,12 @@
  * Plugin URI: https://woocommerce.com/products/eway/
  * Author: Eway
  * Author URI: https://eway.com.au
- * Version: 3.9.2
+ * Version: 3.9.3
  * Text Domain: wc-eway
  * Domain Path: /languages
  * Requires at least: 6.0
- * Tested up to: 6.7
- * WC tested up to: 9.6
+ * Tested up to: 7.0
+ * WC tested up to: 11.0
  * WC requires at least: 7.7
  * Requires PHP: 7.4
  * Copyright: © 2023 Web Active Corporation 
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-define( 'WOOCOMMERCE_GATEWAY_EWAY_VERSION', '3.9.2' ); // WRCS: DEFINED_VERSION.
+define( 'WOOCOMMERCE_GATEWAY_EWAY_VERSION', '3.9.3' ); // WRCS: DEFINED_VERSION.
 define( 'WOOCOMMERCE_GATEWAY_EWAY_MIN_WC_VERSION', '6.0' );
 define( 'WOOCOMMERCE_GATEWAY_EWAY_MIN_WCS_VERSION', '2.0' );
 define( 'WOOCOMMERCE_GATEWAY_EWAY_URL', untrailingslashit( plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) ) );
